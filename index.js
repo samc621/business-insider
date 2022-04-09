@@ -13,7 +13,14 @@ const acceptUrl = async () => {
         type: 'text',
         name: 'url',
         message: 'Enter an article URL to parse',
-        validate: value => new URL(value)
+        validate: value => {
+            const errorMessage = 'Please enter a valid Business Insider article URL'
+            try {
+                return new URL(value).hostname.endsWith('businessinsider.com') || errorMessage;
+            } catch (err) {
+                return errorMessage;
+            }
+        }
     });
     return url;
 }
@@ -76,13 +83,17 @@ const generatePdf = async ({ articleTitle, articleHtml }) => {
         }
     });
     await browser.close();
-    console.log(`Article saved to ${path}`);
+    return path;
 }
 
 const generateArticlePdf = async () => {
+    const start = Date.now();
     const url = await acceptUrl();
     const { articleTitle, articleHtml } = await fetchArticleTitleAndHtml({ url });
-    await generatePdf({ articleTitle, articleHtml });
+    const path = await generatePdf({ articleTitle, articleHtml });
+    const finish = Date.now();
+    const timeToComplete = (finish - start) / 1000;
+    console.log(`[${timeToComplete}s]: Article saved to ${path}`);
 }
 
 (async () => {
